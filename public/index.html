@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebRTC + FreeSWITCH + FFmpeg Demo (TypeScript)</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 1.1em;
+      opacity: 0.9;
+    }
+
+    .typescript-badge {
+      display: inline-block;
+      background: rgba(49, 120, 198, 0.9);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      margin-left: 10px;
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      padding: 30px;
+    }
+
+    .video-container {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .video-container h3 {
+      margin-bottom: 15px;
+      color: #333;
+      font-size: 1.3em;
+    }
+
+    video {
+      width: 100%;
+      height: 400px;
+      background: #000;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      flex: 1;
+      min-width: 120px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    button.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    button.success {
+      background: #10b981;
+      color: white;
+    }
+
+    button.success:hover {
+      background: #059669;
+    }
+
+    button.danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    button.danger:hover {
+      background: #dc2626;
+    }
+
+    button.warning {
+      background: #f59e0b;
+      color: white;
+    }
+
+    button.warning:hover {
+      background: #d97706;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .status {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .status h3 {
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .status-item {
+      padding: 10px;
+      margin: 5px 0;
+      background: white;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .status-indicator.connected {
+      background: #10b981;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    }
+
+    .status-indicator.disconnected {
+      background: #ef4444;
+    }
+
+    .recordings {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      grid-column: 1 / -1;
+    }
+
+    .recordings h3 {
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .recording-item {
+      padding: 15px;
+      margin: 10px 0;
+      background: white;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .recording-item a {
+      padding: 8px 16px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+
+    .recording-item a:hover {
+      background: #764ba2;
+    }
+
+    .info-panel {
+      background: #e8f4fd;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      grid-column: 1 / -1;
+    }
+
+    .info-panel h3 {
+      margin-bottom: 15px;
+      color: #1976d2;
+    }
+
+    .info-panel code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎥 WebRTC Demo <span class="typescript-badge">TypeScript</span></h1>
+      <p>基于 FreeSWITCH 信令和 FFmpeg 媒体处理</p>
+    </div>
+
+    <div class="main-content">
+      <!-- 本地视频 -->
+      <div class="video-container">
+        <h3>📹 本地视频</h3>
+        <video id="localVideo" autoplay muted playsinline></video>
+        <div class="controls">
+          <button id="startBtn" class="primary">开启摄像头</button>
+          <button id="stopBtn" class="danger" disabled>关闭摄像头</button>
+        </div>
+      </div>
+
+      <!-- 远程视频 -->
+      <div class="video-container">
+        <h3>🌐 远程视频</h3>
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div class="controls">
+          <button id="callBtn" class="success" disabled>发起通话</button>
+          <button id="hangupBtn" class="danger" disabled>挂断</button>
+        </div>
+      </div>
+
+      <!-- 录制控制 -->
+      <div class="video-container" style="grid-column: 1 / -1;">
+        <h3>⏺️ 录制控制</h3>
+        <div class="controls">
+          <button id="startRecordBtn" class="warning" disabled>开始录制</button>
+          <button id="stopRecordBtn" class="danger" disabled>停止录制</button>
+          <button id="refreshRecordingsBtn" class="primary">刷新录制列表</button>
+        </div>
+      </div>
+
+      <!-- 状态信息 -->
+      <div class="status">
+        <h3>📊 连接状态</h3>
+        <div class="status-item">
+          <span>
+            <span class="status-indicator" id="wsIndicator"></span>
+            WebSocket 连接
+          </span>
+          <span id="wsStatus">未连接</span>
+        </div>
+        <div class="status-item">
+          <span>
+            <span class="status-indicator" id="peerIndicator"></span>
+            WebRTC 连接
+          </span>
+          <span id="peerStatus">未连接</span>
+        </div>
+        <div class="status-item">
+          <span>客户端 ID</span>
+          <span id="clientId">-</span>
+        </div>
+      </div>
+
+      <!-- 录制列表 -->
+      <div class="recordings">
+        <h3>📼 录制列表</h3>
+        <div id="recordingsList">
+          <p style="text-align: center; color: #666; padding: 20px;">暂无录制文件</p>
+        </div>
+      </div>
+
+      <!-- 信息面板 -->
+      <div class="info-panel">
+        <h3>ℹ️ TypeScript 版本说明</h3>
+        <p>本项目使用 TypeScript 编写，提供完整的类型检查和更好的开发体验。</p>
+        <br>
+        <p><strong>编译命令：</strong></p>
+        <p><code>npm run build</code> - 编译 TypeScript</p>
+        <p><code>npm run dev</code> - 开发模式（使用 ts-node）</p>
+        <br>
+        <p><strong>类型定义文件位于：</strong></p>
+        <p><code>src/types/index.ts</code></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
